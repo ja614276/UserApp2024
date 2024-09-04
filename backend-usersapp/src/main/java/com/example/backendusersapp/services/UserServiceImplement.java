@@ -1,7 +1,7 @@
 package com.example.backendusersapp.services;
 
 import com.example.backendusersapp.models.entities.User;
-import com.example.backendusersapp.models.entities.UserRequest;
+import com.example.backendusersapp.models.request.UserRequest;
 import com.example.backendusersapp.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

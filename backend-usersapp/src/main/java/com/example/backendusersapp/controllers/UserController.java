@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.example.backendusersapp.models.entities.User;
-import com.example.backendusersapp.models.entities.UserRequest;
+import com.example.backendusersapp.models.request.UserRequest;
 import com.example.backendusersapp.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
