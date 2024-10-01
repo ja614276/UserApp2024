@@ -1,5 +1,6 @@
 package com.example.backendusersapp.services;
 
+import com.example.backendusersapp.models.dto.UserDto;
 import com.example.backendusersapp.models.entities.User;
 import com.example.backendusersapp.models.request.UserRequest;
 
@@ -9,13 +10,12 @@ import java.util.Optional;
 public interface UserService {
 
     //listar toddo
-    List<User> findAll();
+    List<UserDto> findAll();
     //buscar or id
-    Optional<User> findById(long id);
+    Optional<UserDto> findById(long id);
     //insertar y actualizar
-    User save(User user);
-
-    Optional <User> update(UserRequest user, Long id);
+    UserDto save(User user);
+    Optional <UserDto> update(UserRequest user, Long id);
 
     //eliminar
     void remove(Long id);
