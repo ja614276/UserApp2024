@@ -4,26 +4,26 @@ import com.example.backendusersapp.models.entities.User;
 
 public class DtoMapperUser {
 
-    public static DtoMapperUser mapper;
+    //public static DtoMapperUser mapper;
     private User user;
 
     public DtoMapperUser() {
     }
 
     public static DtoMapperUser builder() {
-        mapper = new DtoMapperUser();
-        return mapper;
+        return new DtoMapperUser();
     }
 
     public DtoMapperUser setUser(User user) {
         this.user = user;
-        return mapper;
+        return this;
     }
 
     public UserDto build(){
         if (user == null){
             throw new RuntimeException("Debe pasar el user entity!");
         }
-        return new UserDto(this.user.getId(), user.getUsername(), user.getEmail());
+        boolean isAdmin = user.getRoles().stream().anyMatch(r -> "ROLE_ADMIN".equals(r.getName()));
+        return new UserDto(this.user.getId(), user.getUsername(), user.getEmail(), isAdmin);
     }
 }

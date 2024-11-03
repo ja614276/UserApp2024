@@ -1,8 +1,9 @@
-import { useReducer, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import {useContext, useReducer, useState} from "react";
+import {useNavigate} from "react-router-dom";
 import Swal from "sweetalert2";
-import { usersReducer } from "../reducers/usersReducer";
-import { findAll, remove, save, update } from "../services/UserService.js";
+import {usersReducer} from "../reducers/usersReducer";
+import {findAll, remove, save, update} from "../services/UserService.js";
+import {AuthContext} from "../auth/context/AuthContext.jsx";
 
 const initialUsers = [];
 
@@ -11,6 +12,7 @@ const initialUserForm = {
     username: '',
     password: '',
     email: '',
+    admin: false,
 }
 
 const initialErrors = {
@@ -27,19 +29,27 @@ export const useUsers = () => {
     const [errors, setErrors] = useState(initialErrors)
 
     const navigate = useNavigate();
+    const {login, handlerLogout} = useContext(AuthContext);
 
     const getUsers = async () => {
-        const result = await findAll();
-        console.log(result);
-        dispatch({
-            type: 'loadingUsers',
-            payload: result.data,
-        });
-    }
+
+        try {
+            const result = await findAll();
+            console.log(result);
+            dispatch({
+                type: 'loadingUsers',
+                payload: result.data,
+            });
+        } catch (error) {
+            if (error.response?.status == 401) {
+                handlerLogout();
+            }
+        }
+    };
 
     const handlerAddUser = async (user) => {
         // console.log(user);
-
+        if (!login.isAdmin) return;
         let response;
         try {
 
@@ -69,14 +79,16 @@ export const useUsers = () => {
             if (error.response && error.response.status == 400) {
                 console.log(error.response.data);
                 setErrors(error.response.data);
-            }else if(error.response && error.response.status == 500 &&
-                error.response.data?.message?.includes('constraint')){
-                if(error.response.data?.message?.includes('UK_username')){
+            } else if (error.response && error.response.status == 500 &&
+                error.response.data?.message?.includes('constraint')) {
+                if (error.response.data?.message?.includes('UK_username')) {
                     setErrors({username: 'El username ya existe.'})
                 }
-                if(error.response.data?.message?.includes('UK_email')){
+                if (error.response.data?.message?.includes('UK_email')) {
                     setErrors({email: 'El email ya existe.'})
                 }
+            } else if (error.response?.status == 401) {
+                handlerLogout();
             } else {
                 throw error;
             }
@@ -86,6 +98,7 @@ export const useUsers = () => {
     const handlerRemoveUser = (id) => {
         // console.log(id);
 
+        if (!login.isAdmin) return;
         Swal.fire({
             title: 'Esta seguro que desea eliminar?',
             text: "Cuidado el usuario sera eliminado!",
@@ -94,18 +107,25 @@ export const useUsers = () => {
             confirmButtonColor: '#3085d6',
             cancelButtonColor: '#d33',
             confirmButtonText: 'Si, eliminar!'
-        }).then((result) => {
+        }).then(async (result) => {
             if (result.isConfirmed) {
-                remove(id);
-                dispatch({
-                    type: 'removeUser',
-                    payload: id,
-                });
-                Swal.fire(
-                    'Usuario Eliminado!',
-                    'El usuario ha sido eliminado con exito!',
-                    'success'
-                )
+
+                try {
+                    await remove(id);
+                    dispatch({
+                        type: 'removeUser',
+                        payload: id,
+                    });
+                    Swal.fire(
+                        'Usuario Eliminado!',
+                        'El usuario ha sido eliminado con exito!',
+                        'success'
+                    )
+                } catch (error) {
+                    if (error.response?.status == 401) {
+                        handlerLogout();
+                    }
+                }
             }
         })
 
@@ -114,7 +134,7 @@ export const useUsers = () => {
     const handlerUserSelectedForm = (user) => {
         // console.log(user)
         setVisibleForm(true);
-        setUserSelected({ ...user });
+        setUserSelected({...user});
     }
 
     const handlerOpenForm = () => {

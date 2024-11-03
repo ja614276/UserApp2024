@@ -1,5 +1,6 @@
 package com.example.backendusersapp.services;
 
+import com.example.backendusersapp.models.IUser;
 import com.example.backendusersapp.models.dto.DtoMapperUser;
 import com.example.backendusersapp.models.dto.UserDto;
 import com.example.backendusersapp.models.entities.Role;
@@ -40,15 +41,22 @@ public class UserServiceImplement implements UserService {
                 .collect(Collectors.toList());
     }
 
+//    @Override
+//    @Transactional(readOnly = true)
+//    public Optional<UserDto> findById(long id) {
+//        Optional<User> o = repository.findById(id);
+//        if (o.isPresent()) {
+//            return Optional.of(DtoMapperUser.builder().setUser(o.orElseThrow()).build()
+//            );
+//        }
+//        return Optional.empty();
+//    }
+
     @Override
     @Transactional(readOnly = true)
     public Optional<UserDto> findById(long id) {
-        Optional<User> o = repository.findById(id);
-        if (o.isPresent()) {
-            return Optional.of(DtoMapperUser.builder().setUser(o.orElseThrow()).build()
-            );
-        }
-        return Optional.empty();
+        return repository.findById(id).map(u->
+                DtoMapperUser.builder().setUser(u).build());
     }
 
     @Override
@@ -58,11 +66,8 @@ public class UserServiceImplement implements UserService {
 //        user.setPassword(passwordBCrypt);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        Optional<Role> o = roleRepository.findByName("ROLE_USER");
-        List<Role> roles = new ArrayList<>();
-        if (o.isPresent()) {
-            roles.add(o.orElseThrow());
-        }
+        List<Role> roles = getRoles(user);
+
         user.setRoles(roles);
         return DtoMapperUser.builder().setUser(repository.save(user)).build();
     }
@@ -73,7 +78,11 @@ public class UserServiceImplement implements UserService {
         Optional<User> o = repository.findById(id);
         User userOptional = null;
         if (o.isPresent()) {
+
+            List<Role> roles = getRoles(user);
+
             User userDb = o.orElseThrow();
+            userDb.setRoles(roles);
             userDb.setUsername(user.getUsername());
             userDb.setEmail(user.getEmail());
             //return Optional.of(this.save(userDb));
@@ -86,5 +95,20 @@ public class UserServiceImplement implements UserService {
     @Transactional
     public void remove(Long id) {
         repository.deleteById(id);
+    }
+
+    private List<Role> getRoles(IUser user){
+        Optional<Role> ou = roleRepository.findByName("ROLE_USER");
+        List<Role> roles = new ArrayList<>();
+        if (ou.isPresent()) {
+            roles.add(ou.orElseThrow());
+        }
+        if(user.isAdmin()){
+            Optional<Role> oa = roleRepository.findByName("ROLE_ADMIN");
+            if(oa.isPresent()){
+                roles.add(oa.get());
+            }
+        }
+        return roles;
     }
 }
